@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Application\GetKeywordsUseCase;
+use App\Http\Application\GetKeywordUseCase;
+use App\Http\Application\CreateKeywordUseCase;
 use App\Http\Requests\KeywordRequest;
-use App\Models\Keyword;
 use Illuminate\Http\JsonResponse;
 
 class KeywordController extends Controller
@@ -13,9 +15,9 @@ class KeywordController extends Controller
      *
      * @return JsonResponse
      */
-    public function index(): JsonResponse
+    public function index(GetKeywordsUseCase $getKeywordsUseCase): JsonResponse
     {
-        $keywords = Keyword::all();
+        $keywords = $getKeywordsUseCase();
 
         return response()->json([
             'success' => true,
@@ -29,11 +31,9 @@ class KeywordController extends Controller
      * @param KeywordRequest $request
      * @return JsonResponse
      */
-    public function store(KeywordRequest $request): JsonResponse
+    public function store(KeywordRequest $request, CreateKeywordUseCase $createKeywordUseCase): JsonResponse
     {
-        $keyword = Keyword::create([
-            'name' => $request->name
-        ]);
+        $keyword = $createKeywordUseCase($request->name);
 
         return response()->json([
             'success' => true,
@@ -48,9 +48,9 @@ class KeywordController extends Controller
      * @param int $id
      * @return JsonResponse
      */
-    public function show(int $id): JsonResponse
+    public function show(int $id, GetKeywordUseCase $getKeywordUseCase): JsonResponse
     {
-        $keyword = Keyword::with('tasks')->find($id);
+        $keyword = $getKeywordUseCase($id);
 
         if (!$keyword) {
             return response()->json([

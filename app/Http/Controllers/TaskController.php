@@ -2,20 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Application\GetAllTasksUseCase;
+use App\Http\Application\CreateTaskUseCase;
+use App\Http\Application\ToggleTaskUseCase;
 use App\Http\Requests\TaskRequest;
-use App\Models\Task;
 use Illuminate\Http\JsonResponse;
 
 class TaskController extends Controller
 {
+
     /**
      * Return all tasks with their keywords.
      *
      * @return JsonResponse
      */
-    public function index(): JsonResponse
+    public function index(GetAllTasksUseCase $getAllTasksUseCase): JsonResponse
     {
-        $tasks = Task::with('keywords')->get();
+        $tasks = $getAllTasksUseCase();
 
         return response()->json([
             'success' => true,
@@ -29,18 +32,12 @@ class TaskController extends Controller
      * @param TaskRequest $request
      * @return JsonResponse
      */
-    public function store(TaskRequest $request): JsonResponse
+    public function store(TaskRequest $request, CreateTaskUseCase $createTaskUseCase): JsonResponse
     {
-        $task = Task::create([
-            'title' => $request->title,
-            'is_done' => false
-        ]);
-
-        if ($request->has('keyword_ids') && is_array($request->keyword_ids)) {
-            $task->keywords()->attach($request->keyword_ids);
-        }
-
-        $task->load('keywords');
+        $task = $createTaskUseCase(
+            $request->title,
+            $request->keyword_ids ?? null
+        );
 
         return response()->json([
             'success' => true,
@@ -55,9 +52,9 @@ class TaskController extends Controller
      * @param int $id
      * @return JsonResponse
      */
-    public function toggle(int $id): JsonResponse
+    public function toggle(int $id, ToggleTaskUseCase $toggleTaskUseCase): JsonResponse
     {
-        $task = Task::find($id);
+        $task = $toggleTaskUseCase($id);
 
         if (!$task) {
             return response()->json([
@@ -65,12 +62,6 @@ class TaskController extends Controller
                 'message' => 'Task not found.'
             ], 404);
         }
-
-        $task->update([
-            'is_done' => !$task->is_done
-        ]);
-
-        $task->load('keywords');
 
         return response()->json([
             'success' => true,
