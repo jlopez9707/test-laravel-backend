@@ -13,6 +13,6 @@ class GetAllTasksUseCase
      */
     public function __invoke()
     {
-        return Task::with('keywords')->get();
+        return Task::with('keywords')->orderBy('id', 'asc')->get();
     }
 }
